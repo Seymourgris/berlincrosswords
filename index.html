@@ -306,9 +306,10 @@
           });
           inp.addEventListener("input", function () {
             var v = inp.value.replace(/[^A-Za-z0-9ÄÖÜäöüß]/g, "");
+            var wasEmpty = inp.value === "";
             inp.value = v.slice(-1).toUpperCase();
             inp.classList.remove("correct");
-            if (inp.value) { updateProgress(); checkWordFlash(); moveNext(); }
+            if (inp.value) { updateProgress(); moveNext(!wasEmpty); }
           });
         })(r, c, input);
       }
@@ -355,11 +356,14 @@
         }
       }
     }
-    function moveNext() {
+    function moveNext(overwrite) {
       if (!active) return;
       var dr = dir === "down" ? 1 : 0, dc = dir === "across" ? 1 : 0;
       var r = active.r + dr, c = active.c + dc;
-      while (!blocked(r, c) && at(r, c).input.value) { r += dr; c += dc; }
+      if (!overwrite) {
+        // normal solving: skip squares that already have content
+        while (!blocked(r, c) && at(r, c).input.value) { r += dr; c += dc; }
+      }
       if (!blocked(r, c)) at(r, c).input.focus();
     }
     function wordCells() {
@@ -386,11 +390,11 @@
       var input = document.activeElement;
       if (e.key.length === 1 && /[a-zA-Z0-9äöüÄÖÜß]/.test(e.key)) {
         e.preventDefault();
+        var wasEmpty = input.value === "";
         input.value = e.key.toUpperCase();
         input.classList.remove("correct");
         updateProgress();
-        checkWordFlash();
-        moveNext();
+        moveNext(!wasEmpty);
       } else if (e.key === "Backspace") {
         if (input.value === "") {
           e.preventDefault();
