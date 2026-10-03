@@ -4,45 +4,96 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>The 20% Berlin Crossword</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="8" fill="%23000"/><text x="32" y="44" font-family="Arial,Helvetica,sans-serif" font-size="34" font-weight="bold" fill="%23fff" text-anchor="middle">20%25</text></svg>' />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
 <style>
-  :root { font-family: Georgia, system-ui, serif; color: #1a1a1a; background: #fff; --cell: 34px; }
-  body { margin: 0; padding: 16px; display: flex; flex-direction: column; align-items: center; }
-  h1 { font-size: 20px; margin: 0 0 4px; font-family: Arial, Helvetica, sans-serif; }
-  #meta { font-size: 12px; color: #666; margin-bottom: 12px; }
-  .puzzle { display: flex; flex-direction: column; align-items: center; width: 100%; }
-  .puzzle h2 { font-size: 16px; margin: 0 0 4px; font-family: Arial, Helvetica, sans-serif; }
-  .puzzle .pmeta { font-size: 11px; color: #999; margin-bottom: 10px; }
-  .grid { display: grid; grid-gap: 2px; }
-  .cell { width: var(--cell); height: var(--cell); background: #d8d8d8; position: relative; box-sizing: border-box; }
-  .cell.active { outline: 3px solid #2b6cb0; outline-offset: -1px; z-index: 2; }
-  .cell input {
-    width: 100%; height: 100%; border: 1px solid #000; background: #fff;
-    text-align: center; font-size: 18px; font-weight: bold; text-transform: uppercase;
-    caret-color: transparent; cursor: pointer; padding: 0; box-sizing: border-box;
+  :root {
+    --ink: #111;
+    --bg: #faf9f6;
+    --card: #ffffff;
+    --accent: #ffc400;
+    --line: #e5e2da;
+    --muted: #8a867c;
   }
-  .cell input:focus { outline: none; background: #e8f0fe; }
-  .cell input.correct { background: #d3f9d8; border-color: #2f855a; }
-  .cell .num { position: absolute; top: 1px; left: 2px; font-size: 9px; font-weight: bold; pointer-events: none; }
-  .clues { display: flex; gap: 24px; margin-top: 14px; max-width: 620px; width: 100%; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 16px 48px;
+    font-family: "Inter", system-ui, sans-serif;
+    color: var(--ink); background: var(--bg);
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .site-header { text-align: center; margin-bottom: 8px; width: 100%; max-width: 900px; }
+  h1 { font-family: "Space Grotesk", Arial, sans-serif; font-size: 34px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+  h1 .accent {
+    color: var(--ink);
+    background: var(--accent);
+    padding: 0 10px;
+    border-radius: 4px;
+    display: inline-block;
+    transform: rotate(-1.5deg);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  #meta { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+  .divider { border: none; border-top: 1px solid var(--line); width: 100%; max-width: 900px; margin: 28px 0; }
+  .puzzle { display: flex; flex-direction: column; align-items: center; width: 100%; }
+  .puzzle-head { width: 100%; max-width: 900px; display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+  .puzzle h2 { font-family: "Space Grotesk", Arial, sans-serif; font-size: 20px; font-weight: 700; margin: 0; }
+  .puzzle .pmeta { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+  .puzzle-body { display: flex; gap: 36px; align-items: flex-start; justify-content: center; width: 100%; max-width: 900px; flex-wrap: wrap; }
+  .grid { display: grid; gap: 3px; background: var(--card); padding: 14px; border-radius: 10px; border: 1px solid var(--line); box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+  .cell { width: var(--cell); height: var(--cell); background: #d5d2c9; position: relative; border-radius: 3px; }
+  .cell.active { background: var(--accent); border-radius: 3px; }
+  .cell.active input { background: transparent; }
+  .cell input {
+    width: 100%; height: 100%; border: 1px solid #bbb7ac; border-radius: 3px; background: #fff;
+    text-align: center; font-family: "Space Grotesk", Arial, sans-serif; font-size: 19px; font-weight: 700;
+    caret-color: transparent; cursor: pointer; padding: 0;
+  }
+  .cell input:focus { outline: 2px solid var(--ink); outline-offset: -2px; }
+  .cell input.correct { background: #e8f6ec; border-color: #57b26e; }
+  .cell input.correct { animation: pop 0.25s ease; }
+  @keyframes pop { 0% { transform: scale(0.7); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
+  .cell .num { position: absolute; top: 1px; left: 3px; font-size: 9px; font-weight: 600; pointer-events: none; color: #555; z-index: 2; }
+  .clues { flex: 1; min-width: 260px; max-width: 420px; display: flex; gap: 24px; }
   .clues div { flex: 1; }
-  .clues h3 { font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px; font-family: Arial, Helvetica, sans-serif; }
-  .clues ol { margin: 0; padding-left: 18px; font-size: 13px; }
-  .clues li { margin: 2px 0; cursor: pointer; }
-  .clues li:hover, .clues li.active { color: #2b6cb0; font-weight: bold; }
-  .controls { margin-top: 12px; display: flex; gap: 8px; }
-  button { font: inherit; font-size: 12px; padding: 5px 12px; border: 1px solid #999; background: #fff; cursor: pointer; }
-  button:hover { background: #f0f0f0; }
-  .msg { margin-top: 8px; font-size: 13px; min-height: 18px; color: #2f855a; }
-  .divider { border: none; border-top: 1px solid #ccc; width: 100%; max-width: 620px; margin: 40px 0; }
-  .divider.head { margin: 24px 0 40px; }
-  footer { margin-top: 24px; font-size: 11px; color: #999; }
-  footer a { color: #666; }
+  .clues h3 { font-family: "Space Grotesk", Arial, sans-serif; font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 2px; color: var(--ink); border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+  .clues ol { margin: 0; padding-left: 0; font-size: 14px; list-style: none; counter-reset: clue; }
+  .clues li { margin: 7px 0; cursor: pointer; display: flex; gap: 8px; counter-increment: clue; }
+  .clues li::before { content: counter(clue); font-family: "Space Grotesk", Arial, sans-serif; font-weight: 700; min-width: 16px; color: var(--muted); }
+  .clues li:hover, .clues li.active { color: var(--ink); }
+  .clues li.active { background: var(--accent); margin: 0 -6px; padding: 6px; border-radius: 4px; }
+  .clues li.active::before { color: var(--ink); }
+  .controls { margin-top: 14px; display: flex; gap: 10px; }
+  button {
+    font-family: "Space Grotesk", Arial, sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 8px 16px; border: 2px solid var(--ink); background: var(--card); color: var(--ink);
+    cursor: pointer; border-radius: 99px; transition: all 0.15s ease;
+  }
+  button:hover { background: var(--ink); color: #fff; }
+  button.primary { background: var(--ink); color: #fff; }
+  button.primary:hover { background: #333; }
+  .msg { margin-top: 10px; font-size: 14px; min-height: 20px; color: #57b26e; font-weight: 600; }
+  .progress { width: 100%; max-width: 900px; height: 4px; background: var(--line); border-radius: 99px; margin-top: 14px; overflow: hidden; }
+  .progress .bar { height: 100%; width: 0; background: var(--accent); transition: width 0.3s ease; }
+  footer { margin-top: 36px; font-size: 12px; color: var(--muted); text-align: center; }
+  footer a { color: var(--ink); font-weight: 600; }
+  .confetti { position: fixed; top: -12px; width: 9px; height: 14px; z-index: 99; pointer-events: none; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(105vh) rotate(720deg); opacity: 0.8; } }
+  @media (max-width: 720px) {
+    .puzzle-body { flex-direction: column; align-items: center; }
+    .clues { max-width: 620px; width: 100%; }
+  }
 </style>
 </head>
 <body>
-<h1>The 20% Berlin Crossword</h1>
-<div id="meta">Tap a clue, then type. Click a square again to flip direction.</div>
-<hr class="divider head">
+<div class="site-header">
+  <h1>The <span class="accent">20%</span> Berlin Crossword</h1>
+  <p id="meta">Tap a clue, then type. Click a square again to flip direction.</p>
+</div>
 <div id="puzzles"></div>
 <footer>Edited by Maurice Frank · A new Berlin crossword every week · <a href="https://www.20percent.berlin/">Back to the newsletter</a></footer>
 
@@ -56,7 +107,7 @@
   // Answers may contain letters and digits. Numbering is automatic.
   var PUZZLES = [
     {
-      title: "The 20% Berlin Crossword #2",
+      title: "Crossword #2",
       meta: "Berlin club night",
       solution: [
         ".ABOUTBLANK.M",
@@ -90,7 +141,7 @@
       }
     },
     {
-      title: "The 20% Berlin Crossword #1",
+      title: "Crossword #1",
       meta: "Berlin classics",
       solution: [
         "......KEBAB.",
@@ -124,27 +175,49 @@
   ];
   // ==== END OF EDITABLE PUZZLE DATA ====
 
+  function confetti() {
+    var colors = ["#ffc400", "#111", "#57b26e", "#ff5d8f", "#4d9fff"];
+    for (var i = 0; i < 90; i++) {
+      var c = document.createElement("div");
+      c.className = "confetti";
+      c.style.left = (Math.random() * 100) + "vw";
+      c.style.background = colors[i % colors.length];
+      c.style.animationDuration = (2 + Math.random() * 2.5) + "s";
+      c.style.animationDelay = (Math.random() * 0.6) + "s";
+      c.style.transform = "rotate(" + (Math.random() * 360) + "deg)";
+      document.body.appendChild(c);
+      setTimeout(function (el) { return function () { el.remove(); }; }(c), 5500);
+    }
+  }
+
   function renderPuzzle(root, pz) {
     var SOLUTION = pz.solution, CLUES = pz.clues;
     var ROWS = SOLUTION.length;
     var COLS = SOLUTION[0].length;
     var CELL = COLS > 10 ? 30 : 34;
 
+    var head = document.createElement("div");
+    head.className = "puzzle-head";
     var h2 = document.createElement("h2");
     h2.textContent = pz.title;
-    root.appendChild(h2);
+    head.appendChild(h2);
     if (pz.meta) {
       var pm = document.createElement("div");
       pm.className = "pmeta";
       pm.textContent = pz.meta;
-      root.appendChild(pm);
+      head.appendChild(pm);
     }
+    root.appendChild(head);
+
+    var body = document.createElement("div");
+    body.className = "puzzle-body";
+    root.appendChild(body);
 
     var grid = document.createElement("div");
     grid.className = "grid";
     grid.style.gridTemplateColumns = "repeat(" + COLS + ", " + CELL + "px)";
     grid.style.setProperty("--cell", CELL + "px");
-    root.appendChild(grid);
+    body.appendChild(grid);
 
     var clueWrap = document.createElement("div");
     clueWrap.className = "clues";
@@ -157,12 +230,12 @@
     acDiv.appendChild(acH); acDiv.appendChild(acOl);
     dnDiv.appendChild(dnH); dnDiv.appendChild(dnOl);
     clueWrap.appendChild(acDiv); clueWrap.appendChild(dnDiv);
-    root.appendChild(clueWrap);
+    body.appendChild(clueWrap);
 
     var controls = document.createElement("div");
     controls.className = "controls";
-    var checkBtn = document.createElement("button"); checkBtn.textContent = "Check";
-    var revealBtn = document.createElement("button"); revealBtn.textContent = "Reveal Answer";
+    var checkBtn = document.createElement("button"); checkBtn.textContent = "Check"; checkBtn.className = "primary";
+    var revealBtn = document.createElement("button"); revealBtn.textContent = "Reveal";
     var clearBtn = document.createElement("button"); clearBtn.textContent = "Clear";
     controls.appendChild(checkBtn); controls.appendChild(revealBtn); controls.appendChild(clearBtn);
     root.appendChild(controls);
@@ -171,7 +244,13 @@
     msg.className = "msg";
     root.appendChild(msg);
 
-    // "." = black square; any other character is an answer cell (digits allowed)
+    var progress = document.createElement("div");
+    progress.className = "progress";
+    var bar = document.createElement("div");
+    bar.className = "bar";
+    progress.appendChild(bar);
+    root.appendChild(progress);
+
     function blocked(r, c) { return r < 0 || r >= ROWS || c < 0 || c >= COLS || SOLUTION[r][c] === "."; }
 
     var cells = [];
@@ -179,7 +258,6 @@
     var lastClicked = null;
     var dir = "across";
 
-    // freeform numbering: across 1..N, down 1..M
     var numsA = {}, numsD = {};
     var na = 0, nd = 0;
     for (var r = 0; r < ROWS; r++) {
@@ -220,7 +298,7 @@
             var v = inp.value.replace(/[^A-Za-z0-9ÄÖÜäöüß]/g, "");
             inp.value = v.slice(-1).toUpperCase();
             inp.classList.remove("correct");
-            if (inp.value) moveNext();
+            if (inp.value) { updateProgress(); checkWordFlash(); moveNext(); }
           });
         })(r, c, input);
       }
@@ -274,8 +352,34 @@
       while (!blocked(r, c) && at(r, c).input.value) { r += dr; c += dc; }
       if (!blocked(r, c)) at(r, c).input.focus();
     }
+    function wordCells() {
+      var dr = dir === "down" ? 1 : 0, dc = dir === "across" ? 1 : 0;
+      var r = active.r, c = active.c;
+      while (!blocked(r - dr, c - dc)) { r -= dr; c -= dc; }
+      var out = [];
+      while (!blocked(r, c)) { out.push(at(r, c)); r += dr; c += dc; }
+      return out;
+    }
+    function checkWordFlash() {
+      // when the active word is fully filled and correct, pop its cells green
+      if (!active) return;
+      var wc = wordCells();
+      var done = wc.every(function (cl) { return cl.input.value; });
+      if (!done) return;
+      var right = wc.every(function (cl) { return cl.input.value === cl.sol; });
+      if (right) {
+        wc.forEach(function (cl) {
+          cl.input.classList.add("correct");
+          setTimeout(function () { cl.input.classList.remove("correct"); }, 900);
+        });
+      }
+    }
+    function updateProgress() {
+      var filled = 0;
+      cells.forEach(function (cl) { if (cl.input.value) filled++; });
+      bar.style.width = (filled / cells.length * 100) + "%";
+    }
 
-    // keyboard: only acts when this puzzle's own input is focused
     document.addEventListener("keydown", function (e) {
       if (!active || document.activeElement.tagName !== "INPUT") return;
       if (!root.contains(document.activeElement)) return;
@@ -284,13 +388,15 @@
         e.preventDefault();
         input.value = e.key.toUpperCase();
         input.classList.remove("correct");
+        updateProgress();
+        checkWordFlash();
         moveNext();
       } else if (e.key === "Backspace") {
         if (input.value === "") {
           e.preventDefault();
           var dr = dir === "down" ? 1 : 0, dc = dir === "across" ? 1 : 0;
           var prev = at(active.r - dr, active.c - dc);
-          if (prev) { prev.input.value = ""; prev.input.focus(); }
+          if (prev) { prev.input.value = ""; prev.input.focus(); updateProgress(); }
         }
       } else if (e.key === "ArrowRight") { e.preventDefault(); if (!blocked(active.r, active.c + 1)) at(active.r, active.c + 1).input.focus(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); if (!blocked(active.r, active.c - 1)) at(active.r, active.c - 1).input.focus(); }
@@ -331,15 +437,17 @@
         if (v !== "" && v !== cell.sol) bad++;
       });
       if (filled < total) msg.textContent = filled + "/" + total + " letters filled in.";
-      else if (bad === 0) msg.textContent = "Solved! 🎉";
+      else if (bad === 0) { msg.textContent = "Solved! 🎉"; confetti(); }
       else msg.textContent = bad + " letter(s) wrong.";
     });
     revealBtn.addEventListener("click", function () {
       cells.forEach(function (cell) { cell.input.value = cell.sol; cell.input.classList.add("correct"); });
+      updateProgress();
       msg.textContent = "Answer revealed.";
     });
     clearBtn.addEventListener("click", function () {
       cells.forEach(function (cell) { cell.input.value = ""; cell.input.classList.remove("correct"); });
+      updateProgress();
       msg.textContent = "";
     });
   }
