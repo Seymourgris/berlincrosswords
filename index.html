@@ -3,13 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>The 20% Berlin Crossword #1</title>
+<title>The 20% Berlin Crossword</title>
 <style>
   :root { font-family: Georgia, system-ui, serif; color: #1a1a1a; background: #fff; --cell: 34px; }
   body { margin: 0; padding: 16px; display: flex; flex-direction: column; align-items: center; }
   h1 { font-size: 20px; margin: 0 0 4px; font-family: Arial, Helvetica, sans-serif; }
   #meta { font-size: 12px; color: #666; margin-bottom: 12px; }
-  #grid { display: grid; grid-gap: 2px; }
+  .puzzle { display: flex; flex-direction: column; align-items: center; width: 100%; }
+  .puzzle h2 { font-size: 16px; margin: 0 0 4px; font-family: Arial, Helvetica, sans-serif; }
+  .puzzle .pmeta { font-size: 11px; color: #999; margin-bottom: 10px; }
+  .grid { display: grid; grid-gap: 2px; }
   .cell { width: var(--cell); height: var(--cell); background: #d8d8d8; position: relative; box-sizing: border-box; }
   .cell.active { outline: 3px solid #2b6cb0; outline-offset: -1px; z-index: 2; }
   .cell input {
@@ -20,258 +23,336 @@
   .cell input:focus { outline: none; background: #e8f0fe; }
   .cell input.correct { background: #d3f9d8; border-color: #2f855a; }
   .cell .num { position: absolute; top: 1px; left: 2px; font-size: 9px; font-weight: bold; pointer-events: none; }
-  #clues { display: flex; gap: 24px; margin-top: 14px; max-width: 620px; width: 100%; }
-  #clues div { flex: 1; }
-  #clues h2 { font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px; font-family: Arial, Helvetica, sans-serif; }
-  #clues ol { margin: 0; padding-left: 18px; font-size: 13px; }
-  #clues li { margin: 2px 0; cursor: pointer; }
-  #clues li:hover, #clues li.active { color: #2b6cb0; font-weight: bold; }
-  #controls { margin-top: 12px; display: flex; gap: 8px; }
+  .clues { display: flex; gap: 24px; margin-top: 14px; max-width: 620px; width: 100%; }
+  .clues div { flex: 1; }
+  .clues h3 { font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px; font-family: Arial, Helvetica, sans-serif; }
+  .clues ol { margin: 0; padding-left: 18px; font-size: 13px; }
+  .clues li { margin: 2px 0; cursor: pointer; }
+  .clues li:hover, .clues li.active { color: #2b6cb0; font-weight: bold; }
+  .controls { margin-top: 12px; display: flex; gap: 8px; }
   button { font: inherit; font-size: 12px; padding: 5px 12px; border: 1px solid #999; background: #fff; cursor: pointer; }
   button:hover { background: #f0f0f0; }
-  #msg { margin-top: 8px; font-size: 13px; min-height: 18px; color: #2f855a; }
-  footer { margin-top: 16px; font-size: 11px; color: #999; }
+  .msg { margin-top: 8px; font-size: 13px; min-height: 18px; color: #2f855a; }
+  .divider { border: none; border-top: 1px solid #ccc; width: 100%; max-width: 620px; margin: 40px 0; }
+  footer { margin-top: 24px; font-size: 11px; color: #999; }
   footer a { color: #666; }
 </style>
 </head>
 <body>
-<h1>The 20% Berlin Crossword #1</h1>
+<h1>The 20% Berlin Crossword</h1>
 <div id="meta">Tap a clue, then type. Click a square again to flip direction.</div>
-<div id="grid" role="grid"></div>
-<div id="clues">
-  <div><h2>Across</h2><ol id="ac"></ol></div>
-  <div><h2>Down</h2><ol id="dn"></ol></div>
-</div>
-<div id="controls">
-  <button id="check">Check</button>
-  <button id="reveal">Reveal Answer</button>
-  <button id="clear">Clear</button>
-</div>
-<div id="msg"></div>
-<footer>Edited by Maurice Frank · A new Berlin crossword every week · <a href="https://www.20percent.berlin/" id="home-link">Back to the newsletter</a></footer>
+<div id="puzzles"></div>
+<footer>Edited by Maurice Frank · A new Berlin crossword every week · <a href="https://www.20percent.berlin/">Back to the newsletter</a></footer>
 
 <script>
 (function () {
   "use strict";
 
-  // ==== EDIT YOUR PUZZLE HERE ====
-  // One string per row. "0" = black square, letters = solution.
-  // Grid may be rectangular. Numbering is computed automatically.
-  var SOLUTION = [
-    "000000KEBAB0",
-    "00STASI00000",
-    "0000M0O00B00",
-    "0000P0SPREE0",
-    "MITTE0K00R00",
-    "A0E0L0000L00",
-    "U0G000000I00",
-    "E0E0000WENDE",
-    "R0L000000E00",
-    "000000000R00"
+  // ==== EDIT YOUR PUZZLES HERE ====
+  // Newest first — it appears at the top of the page.
+  // One string per row, all rows equal length. "." = black square.
+  // Answers may contain letters and digits. Numbering is automatic.
+  var PUZZLES = [
+    {
+      title: "The 20% Berlin Crossword #2",
+      meta: "Berlin club night",
+      solution: [
+        ".ABOUTBLANK.M",
+        "......E.....O",
+        ".....GRETCHEN",
+        "......G.....S",
+        ".SISYPHOS...T",
+        "......A.....E",
+        ".R..S.I.....R",
+        ".INSOMNIA....",
+        ".T..2...1....",
+        ".T..6...0....",
+        ".E......0....",
+        "TRESOR......."
+      ],
+      clues: {
+        across: [
+          [1, "Web error message"],
+          [2, "German girl's name — club in an old bathhouse"],
+          [3, "Rolled the rock"],
+          [4, "Club in Tempelhof"],
+          [5, "Was a safe"]
+        ],
+        down: [
+          [1, "Mountain-grove club"],
+          [2, "______ Ronsons"],
+          [3, "Plus Butzke"],
+          [4, "Oranienburger Str legend"],
+          [5, "Club-killing Autobahn"]
+        ]
+      }
+    },
+    {
+      title: "The 20% Berlin Crossword #1",
+      meta: "Berlin classics",
+      solution: [
+        "......KEBAB.",
+        "..STASI.....",
+        "....M.O..B..",
+        "....P.SPREE.",
+        "MITTE.K..R..",
+        "A.E.L....L..",
+        "U.G......I..",
+        "E.E....WENDE",
+        "R.L......E..",
+        ".........R.."
+      ],
+      clues: {
+        across: [
+          [1, "Late-night staple at every Berlin Imbiss"],
+          [2, "East Germany's notorious secret police"],
+          [3, "River flowing through central Berlin"],
+          [4, "Berlin's central district — literally 'middle'"],
+          [5, "The 'turn': German reunification era, 1989–90"]
+        ],
+        down: [
+          [1, "Corner stand for snacks, tickets & cigarettes"],
+          [2, "Traffic light — also the nickname of Germany's 2021 coalition"],
+          [3, "'Ich bin ein ___' — JFK's famous 1963 declaration"],
+          [4, "The ___ that fell in November 1989"],
+          [5, "Berlin's beloved airport, closed in 2020"]
+        ]
+      }
+    }
   ];
-
-  var CLUES = {
-    across: [
-      [1, "Late-night staple at every Berlin Imbiss"],
-      [2, "East Germany's notorious secret police"],
-      [3, "River flowing through central Berlin"],
-      [4, "Berlin's central district — literally 'middle'"],
-      [5, "The 'turn': German reunification era, 1989–90"]
-    ],
-    down: [
-      [1, "Corner stand for snacks, tickets & cigarettes"],
-      [2, "Traffic light — also the nickname of Germany's 2021 coalition"],
-      [3, "'Ich bin ein ___' — JFK's famous 1963 declaration"],
-      [4, "The ___ that fell in November 1989"],
-      [5, "Berlin's beloved airport, closed in 2020"]
-    ]
-  };
   // ==== END OF EDITABLE PUZZLE DATA ====
 
-  var ROWS = SOLUTION.length;
-  var COLS = SOLUTION[0].length;
-  var CELL = COLS > 10 ? 30 : 34;
-  var grid = document.getElementById("grid");
-  document.documentElement.style.setProperty("--cell", CELL + "px");
-  grid.style.gridTemplateColumns = "repeat(" + COLS + ", " + CELL + "px)";
-  var cells = [];
-  var active = null;
-  var lastClicked = null;
-  var dir = "across";
-  var msg = document.getElementById("msg");
+  function renderPuzzle(root, pz) {
+    var SOLUTION = pz.solution, CLUES = pz.clues;
+    var ROWS = SOLUTION.length;
+    var COLS = SOLUTION[0].length;
+    var CELL = COLS > 10 ? 30 : 34;
 
-  // numbering
-  // Freeform numbering: across words 1..N in reading order, down words 1..M
-  var numsA = {}, numsD = {};
-  var na = 0, nd = 0;
-  function blocked(r, c) { return r < 0 || r >= ROWS || c < 0 || c >= COLS || SOLUTION[r][c] === "0" || SOLUTION[r][c] === "."; }
-  for (var r = 0; r < ROWS; r++) {
-    for (var c = 0; c < COLS; c++) {
-      if (blocked(r, c)) continue;
-      if (blocked(r, c - 1) && !blocked(r, c + 1)) { na++; numsA[r + "," + c] = na; }
-      if (blocked(r - 1, c) && !blocked(r + 1, c)) { nd++; numsD[r + "," + c] = nd; }
+    var h2 = document.createElement("h2");
+    h2.textContent = pz.title;
+    root.appendChild(h2);
+    if (pz.meta) {
+      var pm = document.createElement("div");
+      pm.className = "pmeta";
+      pm.textContent = pz.meta;
+      root.appendChild(pm);
     }
-  }
 
-  // build grid
-  for (var r = 0; r < ROWS; r++) {
-    for (var c = 0; c < COLS; c++) {
-      var ch = SOLUTION[r][c];
-      var wrap = document.createElement("div");
-      wrap.className = "cell";
-      grid.appendChild(wrap);
-      if (ch === "0" || ch === ".") continue;
-      var input = document.createElement("input");
-      input.maxLength = 1;
-      input.setAttribute("autocomplete", "off");
-      var numA = numsA[r + "," + c] || null;
-      var numD = numsD[r + "," + c] || null;
-      if (numA || numD) {
-        var s = document.createElement("span");
-        s.className = "num";
-        s.textContent = (numA && numD && numA !== numD) ? numA + "/" + numD : (numA || numD);
-        wrap.appendChild(s);
-      }
-      wrap.appendChild(input);
-      cells.push({ el: wrap, input: input, r: r, c: c, sol: ch, numA: numA, numD: numD });
-      (function (rr, cc, inp) {
-        inp.addEventListener("focus", function () { setActive(rr, cc); });
-        inp.addEventListener("click", function () {
-          // flip only on a SECOND consecutive click of the same square
-          if (lastClicked && lastClicked.r === rr && lastClicked.c === cc) flip();
-          lastClicked = { r: rr, c: cc };
-        });
-        inp.addEventListener("input", function () {
-          // fallback for virtual keyboards (keydown e.key is "Unidentified")
-          var v = inp.value.replace(/[^A-Za-zÄÖÜäöüß]/g, "");
-          inp.value = v.slice(-1).toUpperCase();
-          inp.classList.remove("correct");
-          if (inp.value) moveNext();
-        });
-      })(r, c, input);
-    }
-  }
+    var grid = document.createElement("div");
+    grid.className = "grid";
+    grid.style.gridTemplateColumns = "repeat(" + COLS + ", " + CELL + "px)";
+    grid.style.setProperty("--cell", CELL + "px");
+    root.appendChild(grid);
 
-  function at(r, c) {
-    for (var i = 0; i < cells.length; i++)
-      if (cells[i].r === r && cells[i].c === c) return cells[i];
-    return null;
-  }
-  function flip() {
-    // only flip if the other direction actually has a word through this cell
-    if (active && hasWord(active.r, active.c, dir === "across" ? "down" : "across")) {
-      dir = dir === "across" ? "down" : "across";
-    }
-    highlight();
-  }
-  function hasWord(r, c, d) {
-    var dr = d === "down" ? 1 : 0, dc = d === "across" ? 1 : 0;
-    return !blocked(r + dr, c + dc) || !blocked(r - dr, c - dc);
-  }
-  function setActive(r, c) {
-    active = { r: r, c: c };
-    if (!hasWord(r, c, dir)) {
-      dir = dir === "across" ? "down" : "across";
-    }
-    highlight();
-  }
-  function highlight() {
-    document.querySelectorAll(".cell.active").forEach(function (el) { el.classList.remove("active"); });
-    document.querySelectorAll("#clues li.active").forEach(function (el) { el.classList.remove("active"); });
-    if (!active) return;
-    var dr = dir === "down" ? 1 : 0, dc = dir === "across" ? 1 : 0;
-    var r = active.r, c = active.c;
-    while (!blocked(r - dr, c - dc)) { r -= dr; c -= dc; }
-    var cell = at(r, c);
-    var startNum = dir === "across" ? (cell && cell.numA) : (cell && cell.numD);
-    while (!blocked(r, c)) {
-      at(r, c).el.classList.add("active");
-      r += dr; c += dc;
-    }
-    if (startNum) {
-      var items = document.getElementById(dir === "across" ? "ac" : "dn").children;
-      for (var i = 0; i < items.length; i++) {
-        if (parseInt(items[i].getAttribute("data-num"), 10) === startNum) items[i].classList.add("active");
+    var clueWrap = document.createElement("div");
+    clueWrap.className = "clues";
+    var acDiv = document.createElement("div");
+    var dnDiv = document.createElement("div");
+    var acH = document.createElement("h3"); acH.textContent = "Across";
+    var dnH = document.createElement("h3"); dnH.textContent = "Down";
+    var acOl = document.createElement("ol");
+    var dnOl = document.createElement("ol");
+    acDiv.appendChild(acH); acDiv.appendChild(acOl);
+    dnDiv.appendChild(dnH); dnDiv.appendChild(dnOl);
+    clueWrap.appendChild(acDiv); clueWrap.appendChild(dnDiv);
+    root.appendChild(clueWrap);
+
+    var controls = document.createElement("div");
+    controls.className = "controls";
+    var checkBtn = document.createElement("button"); checkBtn.textContent = "Check";
+    var revealBtn = document.createElement("button"); revealBtn.textContent = "Reveal Answer";
+    var clearBtn = document.createElement("button"); clearBtn.textContent = "Clear";
+    controls.appendChild(checkBtn); controls.appendChild(revealBtn); controls.appendChild(clearBtn);
+    root.appendChild(controls);
+
+    var msg = document.createElement("div");
+    msg.className = "msg";
+    root.appendChild(msg);
+
+    // "." = black square; any other character is an answer cell (digits allowed)
+    function blocked(r, c) { return r < 0 || r >= ROWS || c < 0 || c >= COLS || SOLUTION[r][c] === "."; }
+
+    var cells = [];
+    var active = null;
+    var lastClicked = null;
+    var dir = "across";
+
+    // freeform numbering: across 1..N, down 1..M
+    var numsA = {}, numsD = {};
+    var na = 0, nd = 0;
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        if (blocked(r, c)) continue;
+        if (blocked(r, c - 1) && !blocked(r, c + 1)) { na++; numsA[r + "," + c] = na; }
+        if (blocked(r - 1, c) && !blocked(r + 1, c)) { nd++; numsD[r + "," + c] = nd; }
       }
     }
-  }
 
-  function moveNext() {
-    if (!active) return;
-    var dr = dir === "down" ? 1 : 0, dc = dir === "across" ? 1 : 0;
-    var r = active.r + dr, c = active.c + dc;
-    while (!blocked(r, c) && at(r, c).input.value) { r += dr; c += dc; }
-    if (!blocked(r, c)) at(r, c).input.focus();
-  }
-
-  document.addEventListener("keydown", function (e) {
-    if (!active || document.activeElement.tagName !== "INPUT") return;
-    var input = document.activeElement;
-    if (e.key.length === 1 && /[a-zA-ZäöüÄÖÜß]/.test(e.key)) {
-      e.preventDefault();
-      input.value = e.key.toUpperCase();
-      input.classList.remove("correct");
-      moveNext();
-    } else if (e.key === "Backspace") {
-      if (input.value === "") {
-        e.preventDefault();
-        var dr = dir === "down" ? 1 : 0, dc = dir === "across" ? 1 : 0;
-        var prev = at(active.r - dr, active.c - dc);
-        if (prev) { prev.input.value = ""; prev.input.focus(); }
-      }
-    } else if (e.key === "ArrowRight") { e.preventDefault(); if (!blocked(active.r, active.c + 1)) at(active.r, active.c + 1).input.focus(); }
-    else if (e.key === "ArrowLeft") { e.preventDefault(); if (!blocked(active.r, active.c - 1)) at(active.r, active.c - 1).input.focus(); }
-    else if (e.key === "ArrowDown") { e.preventDefault(); if (!blocked(active.r + 1, active.c)) at(active.r + 1, active.c).input.focus(); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); if (!blocked(active.r - 1, active.c)) at(active.r - 1, active.c).input.focus(); }
-    else if (e.key === " ") { e.preventDefault(); flip(); }
-    msg.textContent = "";
-  });
-
-  // mobile: click-to-focus lets the on-screen keyboard appear via input focus
-  function buildClues(listId, arr) {
-    var ol = document.getElementById(listId);
-    arr.forEach(function (cl) {
-      var li = document.createElement("li");
-      li.textContent = cl[1];
-      li.setAttribute("data-num", cl[0]);
-      li.addEventListener("click", function () {
-        for (var i = 0; i < cells.length; i++) {
-          var cellNum = listId === "ac" ? cells[i].numA : cells[i].numD;
-          if (cellNum === cl[0]) {
-            dir = listId === "ac" ? "across" : "down";
-            var ok = listId === "ac"
-              ? !blocked(cells[i].r, cells[i].c + 1)
-              : !blocked(cells[i].r + 1, cells[i].c);
-            if (ok) { cells[i].input.focus(); return; }
-          }
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var ch = SOLUTION[r][c];
+        var wrap = document.createElement("div");
+        wrap.className = "cell";
+        grid.appendChild(wrap);
+        if (blocked(r, c)) continue;
+        var input = document.createElement("input");
+        input.maxLength = 1;
+        input.setAttribute("autocomplete", "off");
+        var numA = numsA[r + "," + c] || null;
+        var numD = numsD[r + "," + c] || null;
+        if (numA || numD) {
+          var s = document.createElement("span");
+          s.className = "num";
+          s.textContent = (numA && numD && numA !== numD) ? numA + "/" + numD : (numA || numD);
+          wrap.appendChild(s);
         }
+        wrap.appendChild(input);
+        cells.push({ el: wrap, input: input, r: r, c: c, sol: ch, numA: numA, numD: numD });
+        (function (rr, cc, inp) {
+          inp.addEventListener("focus", function () { setActive(rr, cc); });
+          inp.addEventListener("click", function () {
+            if (lastClicked && lastClicked.r === rr && lastClicked.c === cc) flip();
+            lastClicked = { r: rr, c: cc };
+          });
+          inp.addEventListener("input", function () {
+            var v = inp.value.replace(/[^A-Za-z0-9ÄÖÜäöüß]/g, "");
+            inp.value = v.slice(-1).toUpperCase();
+            inp.classList.remove("correct");
+            if (inp.value) moveNext();
+          });
+        })(r, c, input);
+      }
+    }
+
+    function at(r, c) {
+      for (var i = 0; i < cells.length; i++)
+        if (cells[i].r === r && cells[i].c === c) return cells[i];
+      return null;
+    }
+    function hasWord(r, c, d) {
+      var dr = d === "down" ? 1 : 0, dc = d === "across" ? 1 : 0;
+      return !blocked(r + dr, c + dc) || !blocked(r - dr, c - dc);
+    }
+    function flip() {
+      if (active && hasWord(active.r, active.c, dir === "across" ? "down" : "across")) {
+        dir = dir === "across" ? "down" : "across";
+      }
+      highlight();
+    }
+    function setActive(r, c) {
+      active = { r: r, c: c };
+      if (!hasWord(r, c, dir)) dir = dir === "across" ? "down" : "across";
+      highlight();
+    }
+    function highlight() {
+      cells.forEach(function (cell) { cell.el.classList.remove("active"); });
+      acOl.querySelectorAll("li.active").forEach(function (li) { li.classList.remove("active"); });
+      dnOl.querySelectorAll("li.active").forEach(function (li) { li.classList.remove("active"); });
+      if (!active) return;
+      var dr = dir === "down" ? 1 : 0, dc = dir === "across" ? 1 : 0;
+      var r = active.r, c = active.c;
+      while (!blocked(r - dr, c - dc)) { r -= dr; c -= dc; }
+      var cell = at(r, c);
+      var startNum = dir === "across" ? (cell && cell.numA) : (cell && cell.numD);
+      while (!blocked(r, c)) {
+        at(r, c).el.classList.add("active");
+        r += dr; c += dc;
+      }
+      if (startNum) {
+        var items = (dir === "across" ? acOl : dnOl).children;
+        for (var i = 0; i < items.length; i++) {
+          if (parseInt(items[i].getAttribute("data-num"), 10) === startNum) items[i].classList.add("active");
+        }
+      }
+    }
+    function moveNext() {
+      if (!active) return;
+      var dr = dir === "down" ? 1 : 0, dc = dir === "across" ? 1 : 0;
+      var r = active.r + dr, c = active.c + dc;
+      while (!blocked(r, c) && at(r, c).input.value) { r += dr; c += dc; }
+      if (!blocked(r, c)) at(r, c).input.focus();
+    }
+
+    // keyboard: only acts when this puzzle's own input is focused
+    document.addEventListener("keydown", function (e) {
+      if (!active || document.activeElement.tagName !== "INPUT") return;
+      if (!root.contains(document.activeElement)) return;
+      var input = document.activeElement;
+      if (e.key.length === 1 && /[a-zA-Z0-9äöüÄÖÜß]/.test(e.key)) {
+        e.preventDefault();
+        input.value = e.key.toUpperCase();
+        input.classList.remove("correct");
+        moveNext();
+      } else if (e.key === "Backspace") {
+        if (input.value === "") {
+          e.preventDefault();
+          var dr = dir === "down" ? 1 : 0, dc = dir === "across" ? 1 : 0;
+          var prev = at(active.r - dr, active.c - dc);
+          if (prev) { prev.input.value = ""; prev.input.focus(); }
+        }
+      } else if (e.key === "ArrowRight") { e.preventDefault(); if (!blocked(active.r, active.c + 1)) at(active.r, active.c + 1).input.focus(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); if (!blocked(active.r, active.c - 1)) at(active.r, active.c - 1).input.focus(); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); if (!blocked(active.r + 1, active.c)) at(active.r + 1, active.c).input.focus(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); if (!blocked(active.r - 1, active.c)) at(active.r - 1, active.c).input.focus(); }
+      else if (e.key === " ") { e.preventDefault(); flip(); }
+      msg.textContent = "";
+    });
+
+    function buildClues(ol, arr, isAcross) {
+      arr.forEach(function (cl) {
+        var li = document.createElement("li");
+        li.textContent = cl[1];
+        li.setAttribute("data-num", cl[0]);
+        li.addEventListener("click", function () {
+          for (var i = 0; i < cells.length; i++) {
+            var cellNum = isAcross ? cells[i].numA : cells[i].numD;
+            if (cellNum === cl[0]) {
+              dir = isAcross ? "across" : "down";
+              var ok = isAcross ? !blocked(cells[i].r, cells[i].c + 1) : !blocked(cells[i].r + 1, cells[i].c);
+              if (ok) { cells[i].input.focus(); return; }
+            }
+          }
+        });
+        ol.appendChild(li);
       });
-      ol.appendChild(li);
+    }
+    buildClues(acOl, CLUES.across, true);
+    buildClues(dnOl, CLUES.down, false);
+
+    checkBtn.addEventListener("click", function () {
+      var bad = 0, filled = 0, total = 0;
+      cells.forEach(function (cell) {
+        total++;
+        var v = cell.input.value;
+        if (v) filled++;
+        cell.input.classList.toggle("correct", v !== "" && v === cell.sol);
+        if (v !== "" && v !== cell.sol) bad++;
+      });
+      if (filled < total) msg.textContent = filled + "/" + total + " letters filled in.";
+      else if (bad === 0) msg.textContent = "Solved! 🎉";
+      else msg.textContent = bad + " letter(s) wrong.";
+    });
+    revealBtn.addEventListener("click", function () {
+      cells.forEach(function (cell) { cell.input.value = cell.sol; cell.input.classList.add("correct"); });
+      msg.textContent = "Answer revealed.";
+    });
+    clearBtn.addEventListener("click", function () {
+      cells.forEach(function (cell) { cell.input.value = ""; cell.input.classList.remove("correct"); });
+      msg.textContent = "";
     });
   }
-  buildClues("ac", CLUES.across);
-  buildClues("dn", CLUES.down);
 
-  document.getElementById("check").addEventListener("click", function () {
-    var bad = 0, filled = 0, total = 0;
-    cells.forEach(function (cell) {
-      total++;
-      var v = cell.input.value;
-      if (v) filled++;
-      cell.input.classList.toggle("correct", v !== "" && v === cell.sol);
-      if (v !== "" && v !== cell.sol) bad++;
-    });
-    if (filled < total) msg.textContent = filled + "/" + total + " letters filled in.";
-    else if (bad === 0) msg.textContent = "Solved! 🎉";
-    else msg.textContent = bad + " letter(s) wrong.";
-  });
-  document.getElementById("reveal").addEventListener("click", function () {
-    cells.forEach(function (cell) { cell.input.value = cell.sol; cell.input.classList.add("correct"); });
-    msg.textContent = "Answer revealed.";
-  });
-  document.getElementById("clear").addEventListener("click", function () {
-    cells.forEach(function (cell) { cell.input.value = ""; cell.input.classList.remove("correct"); });
-    msg.textContent = "";
+  var host = document.getElementById("puzzles");
+  PUZZLES.forEach(function (pz, i) {
+    if (i > 0) {
+      var hr = document.createElement("hr");
+      hr.className = "divider";
+      host.appendChild(hr);
+    }
+    var wrap = document.createElement("div");
+    wrap.className = "puzzle";
+    host.appendChild(wrap);
+    renderPuzzle(wrap, pz);
   });
 })();
 </script>
