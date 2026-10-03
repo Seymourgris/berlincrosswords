@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>The 20% Berlin Crossword</title>
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="8" fill="%23000"/><text x="32" y="44" font-family="Arial,Helvetica,sans-serif" font-size="34" font-weight="bold" fill="%23fff" text-anchor="middle">20%25</text></svg>' />
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="8" fill="%23fff"/><text x="32" y="44" font-family="Arial,Helvetica,sans-serif" font-size="34" font-weight="bold" fill="%23000" text-anchor="middle">20%25</text></svg>' />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
@@ -371,18 +371,8 @@
       return out;
     }
     function checkWordFlash() {
-      // when the active word is fully filled and correct, pop its cells green
-      if (!active) return;
-      var wc = wordCells();
-      var done = wc.every(function (cl) { return cl.input.value; });
-      if (!done) return;
-      var right = wc.every(function (cl) { return cl.input.value === cl.sol; });
-      if (right) {
-        wc.forEach(function (cl) {
-          cl.input.classList.add("correct");
-          setTimeout(function () { cl.input.classList.remove("correct"); }, 900);
-        });
-      }
+      // word-complete feedback is intentionally silent — only the Check button reports status
+      return;
     }
     function updateProgress() {
       var filled = 0;
