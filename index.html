@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>The 20% Berlin Crossword</title>
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="8" fill="%23fff"/><text x="32" y="44" font-family="Arial,Helvetica,sans-serif" font-size="34" font-weight="bold" fill="%23000" text-anchor="middle">20%25</text></svg>' />
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="8" fill="%23fff"/><text x="32" y="34" font-family="Arial,Helvetica,sans-serif" font-size="30" font-weight="bold" fill="%23000" text-anchor="middle">20%25</text><text x="32" y="52" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="bold" fill="%23000" text-anchor="middle">BERLIN</text></svg>' />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
@@ -95,14 +95,16 @@
     h1 { font-size: 24px; }
   }
   /* active clue bar above the grid */
+  .grid-col { display: flex; flex-direction: column; align-items: center; }
   .cluebar {
     display: flex; align-items: center; gap: 8px;
-    width: 100%; max-width: 620px;
+    width: 100%; max-width: 560px;
     background: var(--card); border: 1px solid var(--line); border-radius: 8px;
-    padding: 10px 12px; margin-bottom: 10px;
+    padding: 8px 12px; margin: 0 0 6px 0;
     font-size: 15px; font-weight: 600; text-align: left;
-    cursor: pointer; user-select: none; min-height: 40px;
+    cursor: pointer; user-select: none; min-height: 38px;
   }
+  .cluebar.bottom { margin: 6px 0 0 0; }
   .cluebar .cb-num {
     font-family: "Space Grotesk", Arial, sans-serif; font-weight: 700;
     background: var(--accent); border-radius: 4px; padding: 1px 7px; white-space: nowrap;
@@ -251,6 +253,10 @@
     body.className = "puzzle-body";
     root.appendChild(body);
 
+    var gridCol = document.createElement("div");
+    gridCol.className = "grid-col";
+    body.appendChild(gridCol);
+
     var cluebar = document.createElement("div");
     cluebar.className = "cluebar";
     var cbNum = document.createElement("span"); cbNum.className = "cb-num";
@@ -258,10 +264,19 @@
     var cbText = document.createElement("span"); cbText.className = "cb-text";
     cluebar.appendChild(cbNum); cluebar.appendChild(cbDir); cluebar.appendChild(cbText);
     cluebar.addEventListener("click", function () { flip(); });
-    body.appendChild(cluebar);
-    updateCluebar();
+    gridCol.appendChild(cluebar);
 
-    body.appendChild(grid);
+    gridCol.appendChild(grid);
+
+    var cluebar2 = document.createElement("div");
+    cluebar2.className = "cluebar bottom";
+    var cbNum2 = document.createElement("span"); cbNum2.className = "cb-num";
+    var cbDir2 = document.createElement("span"); cbDir2.className = "cb-dir";
+    var cbText2 = document.createElement("span"); cbText2.className = "cb-text";
+    cluebar2.appendChild(cbNum2); cluebar2.appendChild(cbDir2); cluebar2.appendChild(cbText2);
+    cluebar2.addEventListener("click", function () { flip(); });
+    gridCol.appendChild(cluebar2);
+    updateCluebar();
 
     var clueWrap = document.createElement("div");
     clueWrap.className = "clues";
@@ -465,9 +480,11 @@
       var list = dir === "across" ? CLUES.across : CLUES.down;
       var text = "";
       for (var k = 0; k < list.length; k++) if (list[k][0] === num) text = list[k][1];
-      cbNum.textContent = num;
-      cbDir.textContent = dir === "across" ? "Across" : "Down";
-      cbText.textContent = text;
+      [ [cbNum, cbDir, cbText], [cbNum2, cbDir2, cbText2] ].forEach(function (els) {
+        els[0].textContent = num;
+        els[1].textContent = dir === "across" ? "Across" : "Down";
+        els[2].textContent = text;
+      });
     }
 
     function buildClues(ol, arr, isAcross) {
