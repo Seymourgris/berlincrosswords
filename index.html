@@ -73,7 +73,7 @@
   .clues li:hover, .clues li.active { color: var(--ink); }
   .clues li.active { background: var(--accent); margin: 0 -6px; padding: 6px; border-radius: 4px; }
   .clues li.active::before { color: var(--ink); }
-  .controls { margin-top: 14px; display: flex; gap: 10px; }
+  .controls { margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
   button {
     font-family: "Space Grotesk", Arial, sans-serif; font-size: 12px; font-weight: 700;
     letter-spacing: 1px; text-transform: uppercase;
@@ -204,6 +204,8 @@
 
   function confetti() {
     var colors = ["#ffc400", "#111", "#57b26e", "#ff5d8f", "#4d9fff"];
+    var frag = document.createDocumentFragment();
+    var bits = [];
     for (var i = 0; i < 90; i++) {
       var c = document.createElement("div");
       c.className = "confetti";
@@ -212,14 +214,19 @@
       c.style.animationDuration = (2 + Math.random() * 2.5) + "s";
       c.style.animationDelay = (Math.random() * 0.6) + "s";
       c.style.transform = "rotate(" + (Math.random() * 360) + "deg)";
-      document.body.appendChild(c);
-      setTimeout(function (el) { return function () { el.remove(); }; }(c), 5500);
+      frag.appendChild(c);
+      bits.push(c);
     }
+    document.body.appendChild(frag);
+    setTimeout(function () { bits.forEach(function (el) { el.remove(); }); }, 5500);
   }
 
   function renderPuzzle(root, pz) {
     var onTeardown = [];
     var SOLUTION = pz.solution, CLUES = pz.clues;
+    var clueTextA = {}, clueTextD = {};
+    CLUES.across.forEach(function (cl) { clueTextA[cl[0]] = cl[1]; });
+    CLUES.down.forEach(function (cl) { clueTextD[cl[0]] = cl[1]; });
     var ROWS = SOLUTION.length;
     var COLS = SOLUTION[0].length;
 
@@ -236,8 +243,14 @@
       grid.style.setProperty("--cell", cell + "px");
     }
     fitCells();
-    window.addEventListener("resize", fitCells);
-    onTeardown.push(function () { window.removeEventListener("resize", fitCells); });
+    var rafPending = false;
+    function fitCellsThrottled() {
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(function () { rafPending = false; fitCells(); });
+    }
+    window.addEventListener("resize", fitCellsThrottled);
+    onTeardown.push(function () { window.removeEventListener("resize", fitCellsThrottled); });
 
     var head = document.createElement("div");
     head.className = "puzzle-head";
@@ -300,7 +313,7 @@
     var revealAllBtn = document.createElement("button"); revealAllBtn.textContent = "Reveal all";
     var clearBtn = document.createElement("button"); clearBtn.textContent = "Clear";
     controls.appendChild(revealWordBtn); controls.appendChild(revealAllBtn); controls.appendChild(clearBtn);
-    root.appendChild(controls);
+    gridCol.appendChild(controls);
 
     var msg = document.createElement("div");
     msg.className = "msg";
@@ -316,6 +329,8 @@
     function blocked(r, c) { return r < 0 || r >= ROWS || c < 0 || c >= COLS || SOLUTION[r][c] === "."; }
 
     var cells = [];
+    var cellMap = [];
+    for (var mr = 0; mr < ROWS; mr++) cellMap.push(new Array(COLS).fill(null));
     var active = null;
     var lastClicked = null;
     var dir = "across";
@@ -349,7 +364,9 @@
           wrap.appendChild(s);
         }
         wrap.appendChild(input);
-        cells.push({ el: wrap, input: input, r: r, c: c, sol: ch, numA: numA, numD: numD });
+        var cellObj = { el: wrap, input: input, r: r, c: c, sol: ch, numA: numA, numD: numD };
+        cells.push(cellObj);
+        cellMap[r][c] = cellObj;
         (function (rr, cc, inp) {
           inp.addEventListener("focus", function () { setActive(rr, cc); });
           inp.addEventListener("click", function () {
@@ -368,9 +385,8 @@
     }
 
     function at(r, c) {
-      for (var i = 0; i < cells.length; i++)
-        if (cells[i].r === r && cells[i].c === c) return cells[i];
-      return null;
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return null;
+      return cellMap[r][c];
     }
     function hasWord(r, c, d) {
       var dr = d === "down" ? 1 : 0, dc = d === "across" ? 1 : 0;
@@ -387,10 +403,11 @@
       if (!hasWord(r, c, dir)) dir = dir === "across" ? "down" : "across";
       highlight();
     }
+    var activeWordEls = [], activeLi = null;
     function highlight() {
-      cells.forEach(function (cell) { cell.el.classList.remove("active"); });
-      acOl.querySelectorAll("li.active").forEach(function (li) { li.classList.remove("active"); });
-      dnOl.querySelectorAll("li.active").forEach(function (li) { li.classList.remove("active"); });
+      activeWordEls.forEach(function (el) { el.classList.remove("active"); });
+      activeWordEls = [];
+      if (activeLi) { activeLi.classList.remove("active"); activeLi = null; }
       if (!active) return;
       var dr = dir === "down" ? 1 : 0, dc = dir === "across" ? 1 : 0;
       var r = active.r, c = active.c;
@@ -398,13 +415,19 @@
       var cell = at(r, c);
       var startNum = dir === "across" ? (cell && cell.numA) : (cell && cell.numD);
       while (!blocked(r, c)) {
-        at(r, c).el.classList.add("active");
+        var wc = at(r, c);
+        wc.el.classList.add("active");
+        activeWordEls.push(wc.el);
         r += dr; c += dc;
       }
       if (startNum) {
         var items = (dir === "across" ? acOl : dnOl).children;
         for (var i = 0; i < items.length; i++) {
-          if (parseInt(items[i].getAttribute("data-num"), 10) === startNum) items[i].classList.add("active");
+          if (parseInt(items[i].getAttribute("data-num"), 10) === startNum) {
+            items[i].classList.add("active");
+            activeLi = items[i];
+            break;
+          }
         }
       }
       updateCluebar();
@@ -426,10 +449,6 @@
       var out = [];
       while (!blocked(r, c)) { out.push(at(r, c)); r += dr; c += dc; }
       return out;
-    }
-    function checkWordFlash() {
-      // word-complete feedback is intentionally silent — only the Check button reports status
-      return;
     }
     function updateProgress() {
       var filled = 0;
@@ -481,9 +500,8 @@
       var cell = at(st.r, st.c);
       var num = dir === "across" ? cell.numA : cell.numD;
       if (!num) { cluebar.style.visibility = "hidden"; return; }
-      var list = dir === "across" ? CLUES.across : CLUES.down;
-      var text = "";
-      for (var k = 0; k < list.length; k++) if (list[k][0] === num) text = list[k][1];
+      var text = dir === "across" ? clueTextA[num] : clueTextD[num];
+      if (text === undefined) text = "";
       [ [cbNum, cbDir, cbText], [cbNum2, cbDir2, cbText2] ].forEach(function (els) {
         els[0].textContent = num;
         els[1].textContent = dir === "across" ? "Across" : "Down";
