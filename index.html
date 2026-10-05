@@ -56,7 +56,8 @@
   .cell input {
     width: 100%; height: 100%; border: 1px solid #bbb7ac; border-radius: 3px; background: #fff;
     text-align: center; font-family: "Space Grotesk", Arial, sans-serif; font-size: max(16px, calc(var(--cell, 34px) * 0.55)); font-weight: 700;
-    caret-color: transparent; cursor: pointer; padding: 0;
+    caret-color: transparent; cursor: pointer; padding: 0; line-height: 1.2;
+    display: flex; align-items: center; justify-content: center;
   }
   .cell input:focus { outline: 2px solid var(--ink); outline-offset: -2px; }
   .cell input.correct { background: #e8f6ec; border-color: #57b26e; }
@@ -93,6 +94,8 @@
     .puzzle-body { flex-direction: column; align-items: center; }
     .clues { max-width: 620px; width: 100%; }
     h1 { font-size: 24px; }
+    .cell input { font-size: max(13px, calc(var(--cell, 34px) * 0.52)); }
+    .cell .num { top: 0; left: 2px; font-size: 9px; }
   }
   /* active clue bar above the grid */
   .grid-col { display: flex; flex-direction: column; align-items: center; }
@@ -293,10 +296,10 @@
 
     var controls = document.createElement("div");
     controls.className = "controls";
-    var checkBtn = document.createElement("button"); checkBtn.textContent = "Check"; checkBtn.className = "primary";
-    var revealBtn = document.createElement("button"); revealBtn.textContent = "Reveal";
+    var revealWordBtn = document.createElement("button"); revealWordBtn.textContent = "Reveal word"; revealWordBtn.className = "primary";
+    var revealAllBtn = document.createElement("button"); revealAllBtn.textContent = "Reveal all";
     var clearBtn = document.createElement("button"); clearBtn.textContent = "Clear";
-    controls.appendChild(checkBtn); controls.appendChild(revealBtn); controls.appendChild(clearBtn);
+    controls.appendChild(revealWordBtn); controls.appendChild(revealAllBtn); controls.appendChild(clearBtn);
     root.appendChild(controls);
 
     var msg = document.createElement("div");
@@ -444,6 +447,7 @@
         input.value = e.key.toUpperCase();
         input.classList.remove("correct");
         updateProgress();
+        checkSolved();
         moveNext(!wasEmpty);
       } else if (e.key === "Backspace") {
         if (input.value === "") {
@@ -508,25 +512,34 @@
     buildClues(acOl, CLUES.across, true);
     buildClues(dnOl, CLUES.down, false);
 
-    checkBtn.addEventListener("click", function () {
-      var bad = 0, filled = 0, total = 0;
+    function checkSolved() {
+      var allFilled = true, allRight = true;
       cells.forEach(function (cell) {
-        total++;
-        var v = cell.input.value;
-        if (v) filled++;
-        cell.input.classList.toggle("correct", v !== "" && v === cell.sol);
-        if (v !== "" && v !== cell.sol) bad++;
+        if (!cell.input.value) { allFilled = false; return; }
+        if (cell.input.value !== cell.sol) allRight = false;
       });
-      if (filled < total) msg.textContent = filled + "/" + total + " letters filled in.";
-      else if (bad === 0) { msg.textContent = "Solved! 🎉"; confetti(); }
-      else msg.textContent = bad + " letter(s) wrong.";
+      if (allFilled && allRight && !solved) {
+        solved = true;
+        cells.forEach(function (cell) { cell.input.classList.add("correct"); });
+        msg.textContent = "Solved! 🎉";
+        confetti();
+      }
+    }
+    var solved = false;
+
+    revealWordBtn.addEventListener("click", function () {
+      if (!active) { msg.textContent = "Tap a square first."; return; }
+      wordCells().forEach(function (cell) { cell.input.value = cell.sol; cell.input.classList.add("correct"); });
+      updateProgress();
+      msg.textContent = "Word revealed.";
     });
-    revealBtn.addEventListener("click", function () {
+    revealAllBtn.addEventListener("click", function () {
       cells.forEach(function (cell) { cell.input.value = cell.sol; cell.input.classList.add("correct"); });
       updateProgress();
       msg.textContent = "Answer revealed.";
     });
     clearBtn.addEventListener("click", function () {
+      solved = false;
       cells.forEach(function (cell) { cell.input.value = ""; cell.input.classList.remove("correct"); });
       updateProgress();
       msg.textContent = "";
