@@ -674,13 +674,15 @@
   var navBtns = [];
   PUZZLES.forEach(function (pz, i) {
     var m = /#(\d+)/.exec(pz.title);
-    var label = m ? m[1] : String(i + 1);
+    var label = m ? "#" + m[1] : "#" + (i + 1);
     var btn = document.createElement("button");
     btn.textContent = label;
     btn.setAttribute("aria-label", "Go to crossword " + label);
     btn.addEventListener("click", function () {
-      var target = puzzleEls[i];
-      window.scrollTo({ top: target.offsetTop - 64, behavior: "smooth" });
+      var head = puzzleEls[i].querySelector(".puzzle-head");
+      var hdrH = header.getBoundingClientRect().height + 16;
+      var y = head.getBoundingClientRect().top + window.scrollY - hdrH;
+      window.scrollTo({ top: y, behavior: "smooth" });
     });
     nav.appendChild(btn);
     navBtns.push(btn);
