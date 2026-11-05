@@ -114,12 +114,24 @@
   }
   .cluebar .cb-dir { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); white-space: nowrap; }
   .cluebar .cb-text { flex: 1; }
+
+  /* horizontal numbered puzzle menu */
+  .puzzle-nav { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 14px 0 2px; }
+  .puzzle-nav button {
+    width: 36px; height: 36px; padding: 0; line-height: 32px;
+    font-size: 15px; text-align: center;
+  }
+  .puzzle-nav button.active { background: var(--accent); color: var(--ink); border-color: var(--ink); }
+  .puzzle-nav button.active:hover { background: var(--accent); color: var(--ink); }
 </style>
+<script data-goatcounter="https://berlinpuzzles.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 <div class="site-header">
   <h1>The <span class="accent">20%</span> Berlin Crossword</h1>
   <p id="meta">Tap a clue, then type. Click a square again to flip direction.</p>
+  <nav class="puzzle-nav" id="puzzle-nav" aria-label="Jump to crossword"></nav>
 </div>
 <div id="puzzles"></div>
 <footer>Edited by Maurice Frank · A new Berlin crossword every week · <a href="https://www.20percent.berlin/">Back to the newsletter</a></footer>
@@ -641,6 +653,7 @@
   }
 
   var host = document.getElementById("puzzles");
+  var puzzleEls = [];
   PUZZLES.forEach(function (pz, i) {
     if (i > 0) {
       var hr = document.createElement("hr");
@@ -649,9 +662,44 @@
     }
     var wrap = document.createElement("div");
     wrap.className = "puzzle";
+    var m = /#(\d+)/.exec(pz.title);
+    if (m) wrap.id = "puzzle-" + m[1];
     host.appendChild(wrap);
     renderPuzzle(wrap, pz);
+    puzzleEls.push(wrap);
   });
+
+  // horizontal numbered menu: one button per puzzle, jumps to it
+  var nav = document.getElementById("puzzle-nav");
+  var navBtns = [];
+  PUZZLES.forEach(function (pz, i) {
+    var m = /#(\d+)/.exec(pz.title);
+    var label = m ? m[1] : String(i + 1);
+    var btn = document.createElement("button");
+    btn.textContent = label;
+    btn.setAttribute("aria-label", "Go to crossword " + label);
+    btn.addEventListener("click", function () {
+      var target = puzzleEls[i];
+      window.scrollTo({ top: target.offsetTop - 64, behavior: "smooth" });
+    });
+    nav.appendChild(btn);
+    navBtns.push(btn);
+  });
+  var navPinned = false;
+  function updateNav() {
+    var best = 0, bestDist = Infinity;
+    puzzleEls.forEach(function (el, i) {
+      var d = Math.abs(el.getBoundingClientRect().top - 80);
+      if (d < bestDist) { bestDist = d; best = i; }
+    });
+    navBtns.forEach(function (b, i) { b.classList.toggle("active", i === best); });
+  }
+  window.addEventListener("scroll", function () {
+    if (navPinned) return;
+    navPinned = true;
+    requestAnimationFrame(function () { navPinned = false; updateNav(); });
+  }, { passive: true });
+  updateNav();
 
   // sticky header: subtle shadow once the page is scrolled
   var header = document.querySelector(".site-header");
