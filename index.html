@@ -88,6 +88,15 @@
   .progress .bar { height: 100%; width: 0; background: var(--accent); transition: width 0.3s ease; }
   footer { margin-top: 36px; font-size: 12px; color: var(--muted); text-align: center; }
   footer a { color: var(--ink); font-weight: 600; }
+
+  /* impressum overlay */
+  .impressum-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+  .impressum-overlay.open { display: flex; }
+  .impressum { background: var(--card); border: 2px solid var(--ink); border-radius: 12px; max-width: 520px; width: 100%; padding: 28px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+  .impressum h2 { font-family: "Space Grotesk", Arial, sans-serif; font-size: 22px; margin: 0 0 4px; }
+  .impressum p { font-size: 14px; line-height: 1.6; margin: 10px 0; }
+  .impressum .small { font-size: 12px; color: var(--muted); }
+  .impressum .close-btn { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; padding: 0; line-height: 26px; font-size: 14px; }
   .confetti { position: fixed; top: -12px; width: 9px; height: 14px; z-index: 99; pointer-events: none; animation: fall linear forwards; }
   @keyframes fall { to { transform: translateY(105vh) rotate(720deg); opacity: 0.8; } }
   @media (max-width: 720px) {
@@ -134,7 +143,20 @@
   <nav class="puzzle-nav" id="puzzle-nav" aria-label="Jump to crossword"></nav>
 </div>
 <div id="puzzles"></div>
-<footer>Edited by Maurice Frank · A new Berlin crossword every week · <a href="https://www.20percent.berlin/">Back to the newsletter</a></footer>
+<footer>Edited by Maurice Frank · A new Berlin crossword every week · <a href="https://www.20percent.berlin/">Back to the newsletter</a> · <a href="#" id="impressum-link">Impressum</a></footer>
+
+<div class="impressum-overlay" id="impressum-overlay">
+  <div class="impressum" role="dialog" aria-modal="true" aria-labelledby="impressum-title">
+    <button class="close-btn" id="impressum-close" aria-label="Close">×</button>
+    <h2 id="impressum-title">Impressum</h2>
+    <p>Angaben gemäß § 5 DDG</p>
+    <p>Maurice Frank<br />
+    Isländische Straße 7, 10439 Berlin<br />
+    Germany</p>
+    <p>Contact: <a href="mailto:mauricefrank@posteo.de">mauricefrank@posteo.de</a></p>
+    <p class="small">Responsible for the content according to § 18 para. 2 MStV:<br />Maurice Frank, address as above.</p>
+  </div>
+</div>
 
 <script>
 (function () {
@@ -702,6 +724,24 @@
     requestAnimationFrame(function () { navPinned = false; updateNav(); });
   }, { passive: true });
   updateNav();
+
+  // impressum overlay
+  var impOverlay = document.getElementById("impressum-overlay");
+  var impLink = document.getElementById("impressum-link");
+  var impClose = document.getElementById("impressum-close");
+  impLink.addEventListener("click", function (e) {
+    e.preventDefault();
+    impOverlay.classList.add("open");
+    impClose.focus();
+  });
+  function closeImp() { impOverlay.classList.remove("open"); impLink.focus(); }
+  impClose.addEventListener("click", closeImp);
+  impOverlay.addEventListener("click", function (e) {
+    if (e.target === impOverlay) closeImp();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && impOverlay.classList.contains("open")) closeImp();
+  });
 
   // sticky header: subtle shadow once the page is scrolled
   var header = document.querySelector(".site-header");
