@@ -525,7 +525,7 @@
             var wasEmpty = inp.value === "";
             inp.value = v.slice(-1).toUpperCase();
             inp.classList.remove("correct");
-            if (inp.value) { updateProgress(); moveNext(!wasEmpty); }
+            if (inp.value) { updateProgress(); checkSolved(); moveNext(!wasEmpty); }
           });
         })(r, c, input);
       }
@@ -696,7 +696,8 @@
       if (!active) { msg.textContent = "Tap a square first."; return; }
       wordCells().forEach(function (cell) { cell.input.value = cell.sol; cell.input.classList.add("correct"); });
       updateProgress();
-      msg.textContent = "Word revealed.";
+      checkSolved();
+      msg.textContent = solved ? "" : "Word revealed.";
     });
     revealAllBtn.addEventListener("click", function () {
       cells.forEach(function (cell) { cell.input.value = cell.sol; cell.input.classList.add("correct"); });
